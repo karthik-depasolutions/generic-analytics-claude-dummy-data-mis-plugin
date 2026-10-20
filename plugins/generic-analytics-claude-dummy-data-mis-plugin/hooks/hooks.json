@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are working with Generic Analytics Pack MIS data. Guardrails for this session:\n- No industry-specific vocabulary is assumed \u2014 treat all categorical values literally\n- All data access must be read-only"
+          }
+        ]
+      }
+    ]
+  }
+}

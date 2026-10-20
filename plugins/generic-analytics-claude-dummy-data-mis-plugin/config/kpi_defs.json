@@ -1,0 +1,38 @@
+{
+  "pack_slug": "generic-analytics",
+  "generated_at": "2026-10-20T19:42:11.858680+00:00",
+  "kpis": [
+    {
+      "id": "count_by_category",
+      "label": "Count by Category",
+      "description": "Record count grouped by the primary categorical dimension.",
+      "unit": "count",
+      "sql": "SELECT \"checkpoint_ns\" AS category, COUNT(*) AS record_count FROM srcdb.\"public\".\"checkpoints\" GROUP BY \"checkpoint_ns\" ORDER BY record_count DESC",
+      "assertions": [],
+      "result_columns": [
+        "category",
+        "record_count"
+      ],
+      "source_kpi_id": "count_by_category"
+    },
+    {
+      "id": "total_records",
+      "label": "Total Records",
+      "description": "Total number of rows in the primary table.",
+      "unit": "count",
+      "sql": "SELECT COUNT(*) AS total_records FROM srcdb.\"public\".\"checkpoints\"",
+      "assertions": [
+        "total_records >= 0"
+      ],
+      "result_columns": [
+        "total_records"
+      ],
+      "source_kpi_id": "total_records"
+    }
+  ],
+  "skipped": [
+    "average_measure",
+    "sum_measure",
+    "trend_by_month"
+  ]
+}

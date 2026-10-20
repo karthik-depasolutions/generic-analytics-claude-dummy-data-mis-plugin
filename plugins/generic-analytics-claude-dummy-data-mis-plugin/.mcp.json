@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mis-mcp-claude-dummy-data": {
+      "type": "http",
+      "url": "https://gimmick-swell-hull.ngrok-free.dev/mcp/21a1e1d87e65/aDKfoXGbCAUNLMaV8K7OMlfMBCptN-ejNwZ6VQpPXcE",
+      "headers": {
+        "ngrok-skip-browser-warning": "true"
+      }
+    }
+  }
+}

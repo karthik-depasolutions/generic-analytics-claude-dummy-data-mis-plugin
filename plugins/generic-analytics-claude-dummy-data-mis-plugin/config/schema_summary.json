@@ -1,0 +1,174 @@
+{
+  "pack_slug": "generic-analytics",
+  "tables": [
+    {
+      "name": "checkpoint_blobs",
+      "columns": [
+        "thread_id",
+        "checkpoint_ns",
+        "channel",
+        "version",
+        "type",
+        "blob"
+      ],
+      "column_profiles": [
+        {
+          "column": "thread_id",
+          "guessed_role": "identifier",
+          "null_percent": 0.0,
+          "cardinality": 26
+        },
+        {
+          "column": "checkpoint_ns",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 1
+        },
+        {
+          "column": "channel",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 3
+        },
+        {
+          "column": "type",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 1
+        }
+      ]
+    },
+    {
+      "name": "checkpoint_migrations",
+      "columns": [
+        "v"
+      ],
+      "column_profiles": [
+        {
+          "column": "v",
+          "guessed_role": "numeric",
+          "null_percent": 0.0,
+          "cardinality": 10
+        }
+      ]
+    },
+    {
+      "name": "checkpoint_writes",
+      "columns": [
+        "thread_id",
+        "checkpoint_ns",
+        "checkpoint_id",
+        "task_id",
+        "idx",
+        "channel",
+        "type",
+        "blob",
+        "task_path"
+      ],
+      "column_profiles": [
+        {
+          "column": "thread_id",
+          "guessed_role": "identifier",
+          "null_percent": 0.0,
+          "cardinality": 25
+        },
+        {
+          "column": "checkpoint_ns",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 1
+        },
+        {
+          "column": "checkpoint_id",
+          "guessed_role": "identifier",
+          "null_percent": 0.0,
+          "cardinality": 202
+        },
+        {
+          "column": "task_id",
+          "guessed_role": "identifier",
+          "null_percent": 0.0,
+          "cardinality": 202
+        },
+        {
+          "column": "idx",
+          "guessed_role": "boolean_flag",
+          "null_percent": 0.0,
+          "cardinality": 2
+        },
+        {
+          "column": "channel",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 3
+        },
+        {
+          "column": "type",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 2
+        },
+        {
+          "column": "task_path",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 3
+        }
+      ]
+    },
+    {
+      "name": "checkpoints",
+      "columns": [
+        "thread_id",
+        "checkpoint_ns",
+        "checkpoint_id",
+        "parent_checkpoint_id",
+        "type",
+        "checkpoint",
+        "metadata"
+      ],
+      "column_profiles": [
+        {
+          "column": "thread_id",
+          "guessed_role": "identifier",
+          "null_percent": 0.0,
+          "cardinality": 27
+        },
+        {
+          "column": "checkpoint_ns",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 1
+        },
+        {
+          "column": "checkpoint_id",
+          "guessed_role": "identifier",
+          "null_percent": 0.0,
+          "cardinality": 228
+        },
+        {
+          "column": "parent_checkpoint_id",
+          "guessed_role": "identifier",
+          "null_percent": 11.79,
+          "cardinality": 202
+        },
+        {
+          "column": "type",
+          "guessed_role": "categorical",
+          "null_percent": 100.0,
+          "cardinality": 0
+        },
+        {
+          "column": "metadata",
+          "guessed_role": "categorical",
+          "null_percent": 0.0,
+          "cardinality": 14
+        }
+      ]
+    }
+  ],
+  "guardrails": {
+    "max_query_rows": 200,
+    "query_timeout_seconds": 25
+  }
+}

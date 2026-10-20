@@ -1,0 +1,329 @@
+[
+  {
+    "question": "How many total checkpoint blobs are stored?",
+    "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoint_blobs\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "List all unique communication channels present in checkpoint blobs.",
+    "sql": "SELECT DISTINCT channel FROM srcdb.\"public\".\"checkpoint_blobs\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Count the number of checkpoint blobs per channel, ordered by the most frequent.",
+    "sql": "SELECT channel, COUNT(*) AS blob_count FROM srcdb.\"public\".\"checkpoint_blobs\" GROUP BY channel ORDER BY blob_count DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Retrieve an example of a blob content for the 'messages' channel.",
+    "sql": "SELECT blob FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE channel = 'messages' LIMIT 1;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "The `blob` column contains free-form text, often JSON.",
+    "verified": true
+  },
+  {
+    "question": "What is the latest database migration version for the checkpointing system?",
+    "sql": "SELECT MAX(v) FROM srcdb.\"public\".\"checkpoint_migrations\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_migrations\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "List all recorded migration versions.",
+    "sql": "SELECT v FROM srcdb.\"public\".\"checkpoint_migrations\" ORDER BY v DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_migrations\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "How many total checkpoint write events are recorded?",
+    "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoint_writes\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Count the number of checkpoint writes per communication channel.",
+    "sql": "SELECT channel, COUNT(*) AS write_count FROM srcdb.\"public\".\"checkpoint_writes\" GROUP BY channel ORDER BY write_count DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "What are the distinct task paths observed in checkpoint writes?",
+    "sql": "SELECT DISTINCT task_path FROM srcdb.\"public\".\"checkpoint_writes\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Count checkpoint writes by task path, showing the most common paths.",
+    "sql": "SELECT task_path, COUNT(*) AS path_count FROM srcdb.\"public\".\"checkpoint_writes\" GROUP BY task_path ORDER BY path_count DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Show the distribution of the 'idx' flag in checkpoint writes.",
+    "sql": "SELECT idx, COUNT(*) AS idx_count FROM srcdb.\"public\".\"checkpoint_writes\" GROUP BY idx ORDER BY idx_count DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "The `idx` column acts as a binary flag (0 or 1).",
+    "verified": true
+  },
+  {
+    "question": "Retrieve an example of a blob content for a checkpoint write on the 'branch:to:model' channel.",
+    "sql": "SELECT blob FROM srcdb.\"public\".\"checkpoint_writes\" WHERE channel = 'branch:to:model' LIMIT 1;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "The `blob` column contains free-form text, often JSON.",
+    "verified": true
+  },
+  {
+    "question": "How many unique AI agent run IDs (`thread_id`) are present in checkpoint writes?",
+    "sql": "SELECT COUNT(DISTINCT thread_id) FROM srcdb.\"public\".\"checkpoint_writes\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "How many total checkpoints are recorded for AI agent runs?",
+    "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoints\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "List all unique AI agent run IDs (`thread_id`) that have checkpoints.",
+    "sql": "SELECT DISTINCT thread_id FROM srcdb.\"public\".\"checkpoints\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Count the number of checkpoints per AI agent run (`thread_id`), showing the runs with the most checkpoints.",
+    "sql": "SELECT thread_id, COUNT(*) AS checkpoint_count FROM srcdb.\"public\".\"checkpoints\" GROUP BY thread_id ORDER BY checkpoint_count DESC LIMIT 10;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Retrieve an example of the full agent state (`checkpoint` JSON) for a specific checkpoint ID.",
+    "sql": "SELECT checkpoint FROM srcdb.\"public\".\"checkpoints\" WHERE checkpoint_id = '1ef4f797-8335-6428-8001-8a1503f9b875' LIMIT 1;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "The `checkpoint` column contains a detailed JSON string of the agent's state.",
+    "verified": true
+  },
+  {
+    "question": "Count checkpoints by their `metadata` content to understand common steps or sources.",
+    "sql": "SELECT metadata, COUNT(*) AS metadata_count FROM srcdb.\"public\".\"checkpoints\" GROUP BY metadata ORDER BY metadata_count DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "The `metadata` column contains JSON strings; grouping by the full string reveals common patterns.",
+    "verified": true
+  },
+  {
+    "question": "Find checkpoints that are initial inputs (where metadata indicates 'source': 'input').",
+    "sql": "SELECT thread_id, checkpoint_id FROM srcdb.\"public\".\"checkpoints\" WHERE metadata LIKE '%\"source\": \"input\"%';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "This query uses a LIKE operator to search within the JSON string of the `metadata` column.",
+    "verified": true
+  },
+  {
+    "question": "How many unique `thread_id`s exist across all checkpoint-related tables?",
+    "sql": "SELECT COUNT(DISTINCT thread_id) FROM (SELECT thread_id FROM srcdb.\"public\".\"checkpoint_blobs\" UNION ALL SELECT thread_id FROM srcdb.\"public\".\"checkpoint_writes\" UNION ALL SELECT thread_id FROM srcdb.\"public\".\"checkpoints\");",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\"",
+      "srcdb.\"public\".\"checkpoint_writes\"",
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "This query combines `thread_id`s from multiple tables to find a global unique count. No explicit joins are performed.",
+    "verified": true
+  },
+  {
+    "question": "Retrieve the `version` and `channel` for a specific `thread_id` from `checkpoint_blobs`.",
+    "sql": "SELECT version, channel FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Find all checkpoint writes associated with a particular `task_id`.",
+    "sql": "SELECT thread_id, checkpoint_id, channel, task_path FROM srcdb.\"public\".\"checkpoint_writes\" WHERE task_id = '3285b19c-44c9-2c69-0b94-788f5767e524';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Get the `parent_checkpoint_id` and `metadata` for a given `checkpoint_id`.",
+    "sql": "SELECT parent_checkpoint_id, metadata FROM srcdb.\"public\".\"checkpoints\" WHERE checkpoint_id = '1ef4f797-8335-6428-8001-8a1503f9b875';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Count the number of distinct `checkpoint_id`s across all checkpoint-related tables.",
+    "sql": "SELECT COUNT(DISTINCT checkpoint_id) FROM (SELECT checkpoint_id FROM srcdb.\"public\".\"checkpoint_writes\" UNION ALL SELECT checkpoint_id FROM srcdb.\"public\".\"checkpoints\");",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\"",
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "This query combines `checkpoint_id`s from `checkpoint_writes` and `checkpoints` to find a global unique count. `checkpoint_blobs` does not have a `checkpoint_id` column.",
+    "verified": true
+  },
+  {
+    "question": "Retrieve all columns for checkpoint writes where the `type` is 'null'.",
+    "sql": "SELECT thread_id, checkpoint_id, channel, type, blob FROM srcdb.\"public\".\"checkpoint_writes\" WHERE type = 'null';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "The `type` column in `checkpoint_writes` can be 'null' in addition to 'msgpack'.",
+    "verified": true
+  },
+  {
+    "question": "Find all checkpoint blobs associated with the '__pregel_tasks' channel.",
+    "sql": "SELECT thread_id, version, blob FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE channel = '__pregel_tasks';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "List all `thread_id`s that have checkpoint writes on the 'messages' channel.",
+    "sql": "SELECT DISTINCT thread_id FROM srcdb.\"public\".\"checkpoint_writes\" WHERE channel = 'messages';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Identify checkpoints that do not have a `parent_checkpoint_id` (likely initial checkpoints in a thread).",
+    "sql": "SELECT thread_id, checkpoint_id FROM srcdb.\"public\".\"checkpoints\" WHERE parent_checkpoint_id IS NULL;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Count how many times each `parent_checkpoint_id` is referenced, indicating branching or sequential progression.",
+    "sql": "SELECT parent_checkpoint_id, COUNT(*) AS child_count FROM srcdb.\"public\".\"checkpoints\" WHERE parent_checkpoint_id IS NOT NULL GROUP BY parent_checkpoint_id ORDER BY child_count DESC;",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "Retrieve the `checkpoint` and `metadata` for checkpoints where the `metadata` indicates 'step': 0.",
+    "sql": "SELECT checkpoint, metadata FROM srcdb.\"public\".\"checkpoints\" WHERE metadata LIKE '%\"step\": 0%';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "This query uses a LIKE operator to search within the JSON string of the `metadata` column.",
+    "verified": true
+  },
+  {
+    "question": "Find the `thread_id` and `checkpoint_id` for checkpoint writes that occurred on the `~__pregel_pull, model` task path.",
+    "sql": "SELECT thread_id, checkpoint_id FROM srcdb.\"public\".\"checkpoint_writes\" WHERE task_path = '~__pregel_pull, model';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "",
+    "verified": true
+  },
+  {
+    "question": "List all columns for a specific `thread_id` from `checkpoint_blobs`.",
+    "sql": "SELECT thread_id, checkpoint_ns, channel, version, type, blob FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_blobs\""
+    ],
+    "notes": "The `checkpoint_ns` column is always empty.",
+    "verified": true
+  },
+  {
+    "question": "List all columns for a specific `thread_id` from `checkpoint_writes`.",
+    "sql": "SELECT thread_id, checkpoint_ns, checkpoint_id, task_id, idx, channel, type, blob, task_path FROM srcdb.\"public\".\"checkpoint_writes\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "The `checkpoint_ns` column is always empty.",
+    "verified": true
+  },
+  {
+    "question": "List all columns for a specific `thread_id` from `checkpoints`.",
+    "sql": "SELECT thread_id, checkpoint_ns, checkpoint_id, parent_checkpoint_id, type, checkpoint, metadata FROM srcdb.\"public\".\"checkpoints\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoints\""
+    ],
+    "notes": "The `checkpoint_ns` and `type` columns are always empty/null.",
+    "verified": true
+  },
+  {
+    "question": "Count the number of checkpoint writes where `idx` is '1'.",
+    "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoint_writes\" WHERE idx = '1';",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_writes\""
+    ],
+    "notes": "The `idx` column acts as a binary flag.",
+    "verified": true
+  },
+  {
+    "question": "Find the earliest recorded migration version.",
+    "sql": "SELECT MIN(v) FROM srcdb.\"public\".\"checkpoint_migrations\";",
+    "tables": [
+      "srcdb.\"public\".\"checkpoint_migrations\""
+    ],
+    "notes": "",
+    "verified": true
+  }
+]

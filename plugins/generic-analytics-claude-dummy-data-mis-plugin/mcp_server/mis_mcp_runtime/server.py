@@ -1,0 +1,415 @@
+"""The one generic MCP server every generated plugin ships or points at.
+
+Zero customer-specific code lives here — everything customer-specific comes
+from config/*.json (see config.py). This is the architectural boundary the
+whole platform is built around: the generator produces configuration, this
+runtime interprets it, identically, for every customer and every industry.
+"""
+
+from __future__ import annotations
+
+import importlib.resources
+import sys
+from collections.abc import Callable
+from typing import Any
+
+from mcp.server.apps import Apps, ResourceCsp, client_supports_apps
+from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.context import Context
+from mcp_types import ToolAnnotations
+
+from mis_mcp_runtime.catalog import Catalog, load_catalog
+from mis_mcp_runtime.config import ConfigError, RuntimeConfig, load_runtime_config
+from mis_mcp_runtime.engine.duckdb_session import open_session
+from mis_mcp_runtime.errors import tool_guard
+from mis_mcp_runtime.resources import build_instructions, register_resources
+from mis_mcp_runtime.schema_drift import schema_drift_report
+from mis_mcp_runtime.tools.describe_data import (
+    describe_data as _describe_data,
+)
+from mis_mcp_runtime.tools.describe_data import (
+    list_business_concepts as _list_business_concepts,
+)
+from mis_mcp_runtime.tools.describe_schema import describe_schema as _describe_schema
+from mis_mcp_runtime.tools.get_data_profile import get_data_profile as _get_data_profile
+from mis_mcp_runtime.tools.get_kpi import get_kpi as _get_kpi
+from mis_mcp_runtime.tools.get_kpi import list_kpis as _list_kpis
+from mis_mcp_runtime.tools.get_value_set import get_value_set as _get_value_set
+from mis_mcp_runtime.tools.metric_analytics import (
+    breakdown_metric as _breakdown_metric,
+)
+from mis_mcp_runtime.tools.metric_analytics import (
+    compare_kpi as _compare_kpi,
+)
+from mis_mcp_runtime.tools.metric_analytics import (
+    explain_metric as _explain_metric,
+)
+from mis_mcp_runtime.tools.metric_analytics import (
+    query_metric as _query_metric,
+)
+from mis_mcp_runtime.tools.metric_analytics import (
+    rank_entities as _rank_entities,
+)
+from mis_mcp_runtime.tools.record_tools import (
+    get_record as _get_record,
+)
+from mis_mcp_runtime.tools.record_tools import (
+    get_related_records as _get_related_records,
+)
+from mis_mcp_runtime.tools.render_chart import chart_payload as _chart_payload
+from mis_mcp_runtime.tools.render_chart import markdown_table as _markdown_table
+from mis_mcp_runtime.tools.run_safe_query import run_safe_query as _run_safe_query
+from mis_mcp_runtime.tools.search_records import search_records as _search_records
+
+StateFn = Callable[[], tuple[RuntimeConfig, Any]]
+
+_FALLBACK_INSTRUCTIONS = (
+    "Tools for querying this business's MIS data. "
+    "Use describe_data, list_business_concepts, and list_kpis first to discover concepts and "
+    "metrics; use get_kpi, compare_kpi, breakdown_metric, and rank_entities for standard "
+    "analytics; read schema://cookbook and schema://model before writing SQL; "
+    "use run_safe_query ONLY as a last resort when no semantic tool can answer the question."
+)
+
+_CHART_RESOURCE_URI = "ui://mis/chart.html"
+
+# Every tool is read-only and idempotent. `_META` tools answer from config/*.json
+# alone; `_DATA` tools run a query and so reach the (possibly remote) source DB -
+# that is the only distinction the `open_world_hint` captures. These are hints
+# for the client, never a substitute for the structural guards in security/.
+_META = ToolAnnotations(
+    read_only_hint=True, idempotent_hint=True, destructive_hint=False, open_world_hint=False
+)
+_DATA = ToolAnnotations(
+    read_only_hint=True, idempotent_hint=True, destructive_hint=False, open_world_hint=True
+)
+
+
+def _read_ui(filename: str) -> str:
+    return importlib.resources.files("mis_mcp_runtime.ui").joinpath(filename).read_text(encoding="utf-8")
+
+
+def create_server(get_state: StateFn | None = None) -> MCPServer:
+    """Build an MCP server with the complete 4-Tier Business Analytics Surface.
+    `get_state` lets a host (the Forge API) supply per-request config instead
+    of the process-wide env dirs stdio uses.
+    """
+    state: dict[str, Any] = {}
+
+    def _default_state() -> tuple[RuntimeConfig, Any]:
+        if "config" not in state:
+            config = load_runtime_config()
+            con = open_session(config.data_source, config.data_dir)
+            state["config"] = config
+            state["con"] = con
+        return state["config"], state["con"]
+
+    resolve = get_state or _default_state
+
+    apps = Apps()
+
+    def render_chart(kpi_id: str, ctx: Context) -> dict[str, Any]:
+        """Render a KPI as an interactive chart instead of raw numbers - prefer
+        this over get_kpi whenever the user wants to *see* the data, not just
+        read it. Falls back to a markdown table on clients that can't render
+        the chart, so it's always safe to call."""
+        config, con = resolve()
+        result = _get_kpi(config, con, kpi_id)
+        if isinstance(result, dict) and "error" in result:
+            return result
+        payload = {**result, "rendered": _markdown_table(result)}
+        if client_supports_apps(ctx):
+            payload["chart"] = _chart_payload(result)
+        return payload
+
+    apps.tool(
+        resource_uri=_CHART_RESOURCE_URI, visibility=["model"], name="render_chart", annotations=_DATA
+    )(tool_guard(render_chart))
+
+    apps.add_html_resource(
+        _CHART_RESOURCE_URI,
+        _read_ui("chart.html"),
+        title="KPI Chart",
+        description="An interactive chart for one KPI's result.",
+        csp=ResourceCsp(),
+        prefers_border=True,
+    )
+
+    _catalogs: dict[str, Catalog] = {}
+
+    def _catalog() -> Catalog | None:
+        """The sharded knowledge pack, if this is an agent_schema plugin."""
+        cfg, _ = resolve()
+        if cfg.catalog_dir is None:
+            return None
+        key = str(cfg.catalog_dir)
+        if key not in _catalogs:
+            cat = load_catalog(cfg.catalog_dir)
+            if cat is None:
+                return None
+            _catalogs[key] = cat
+        return _catalogs[key]
+
+    try:
+        _cfg, _con = resolve()
+        instructions = build_instructions(
+            _cfg.schema_model or {}, has_catalog=_cfg.catalog_dir is not None
+        )
+        drift = schema_drift_report(_cfg, _con)
+        if drift:
+            print(drift, file=sys.stderr)  # noqa: T201 - the MCP host's log is the only channel here
+            instructions = f"{instructions}\n\n{drift}"
+    except Exception:  # noqa: BLE001 - config not ready yet (per-request state); use the static string
+        instructions = _FALLBACK_INSTRUCTIONS
+
+    mcp = MCPServer(
+        name="mis-mcp-runtime", version="0.2.0", instructions=instructions, extensions=[apps]
+    )
+    register_resources(mcp, resolve)
+
+    def _tool(annotations: ToolAnnotations) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Register a tool through `tool_guard` (uniform error envelope + one
+        stderr audit line per call) with the given read-only annotations."""
+
+        def register(fn: Callable[..., Any]) -> Callable[..., Any]:
+            return mcp.tool(name=fn.__name__, annotations=annotations)(tool_guard(fn))
+
+        return register
+
+    # -------------------------------------------------------------------------
+    # Tier 1: Semantic Discovery Tools
+    # -------------------------------------------------------------------------
+
+    @_tool(_DATA)
+    def describe_data() -> dict[str, Any]:
+        """Return the high-level data overview: domain, core entities, record
+        grain, dimensions, measures, time fields, relationships, and KPI count.
+        Call this FIRST to understand the scope of the dataset."""
+        config, con = resolve()
+        out = _describe_data(config)
+        drift = schema_drift_report(config, con)
+        if drift:
+            out["schema_drift_warning"] = drift
+        return out
+
+    @_tool(_META)
+    def list_business_concepts() -> dict[str, Any]:
+        """List all recognized business entities, dimensions, measures, and business
+        events without requiring database schema knowledge."""
+        config, _ = resolve()
+        return _list_business_concepts(config)
+
+    @_tool(_META)
+    def describe_schema(table: str | None = None) -> dict[str, Any]:
+        """Return table schemas, column data types, guessed roles, and denied column
+        status. Pass table="name" for targeted single-table inspection."""
+        config, _ = resolve()
+        return _describe_schema(config, table=table)
+
+    @_tool(_DATA)
+    def get_data_profile(table: str) -> dict[str, Any]:
+        """Return per-column data quality statistics (null percentages, cardinality,
+        sample values) for one table. Denied columns are always excluded."""
+        config, con = resolve()
+        return _get_data_profile(config, con, table)
+
+    @_tool(_DATA)
+    def get_value_set(field: str, table: str | None = None, limit: int = 50) -> dict[str, Any]:
+        """Retrieve distinct values and percentage distributions for a categorical field.
+        Always use this instead of writing exploratory SQL to see distinct values."""
+        config, con = resolve()
+        return _get_value_set(config, con, field, table=table, limit=limit)
+
+    # -------------------------------------------------------------------------
+    # Tier 2: Business Analytics & KPI Tools
+    # -------------------------------------------------------------------------
+
+    @_tool(_META)
+    def list_kpis() -> dict[str, Any]:
+        """List all verified business KPIs available in the catalog with descriptions,
+        labels, and measurement units."""
+        config, _ = resolve()
+        return _list_kpis(config)
+
+    @_tool(_DATA)
+    def get_kpi(kpi_id: str) -> dict[str, Any]:
+        """Execute a verified business KPI from the catalog (see list_kpis).
+        Always prefer this over run_safe_query whenever a matching KPI exists."""
+        config, con = resolve()
+        return _get_kpi(config, con, kpi_id)
+
+    @_tool(_META)
+    def explain_metric(metric_id: str) -> dict[str, Any]:
+        """Get the transparent formula definition, unit, description, and source
+        fields of a business metric/KPI without executing a query."""
+        config, _ = resolve()
+        return _explain_metric(config, metric_id)
+
+    @_tool(_DATA)
+    def compare_kpi(
+        kpi_id: str,
+        period_a: dict[str, Any] | None = None,
+        period_b: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Compare a KPI across two time periods (e.g. period_a={'start_date': '...'})
+        with automatic calculation of absolute delta and relative percentage change."""
+        config, con = resolve()
+        return _compare_kpi(config, con, kpi_id, period_a, period_b)
+
+    @_tool(_DATA)
+    def rank_entities(
+        entity: str,
+        metric: str | None = None,
+        table: str | None = None,
+        limit: int = 20,
+        order: str = "desc",
+    ) -> dict[str, Any]:
+        """Rank business entities (e.g. top agents, highest performing categories,
+        lead sources) by a metric. Avoids manual SQL ORDER BY queries."""
+        config, con = resolve()
+        return _rank_entities(config, con, entity_dimension=entity, metric=metric, table=table, limit=limit, order=order)
+
+    @_tool(_DATA)
+    def breakdown_metric(
+        dimension: str,
+        metric: str | None = None,
+        table: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """Break down a metric across categories of a dimension (e.g. revenue by region,
+        bookings by status) with automated share-of-total percentage calculation."""
+        config, con = resolve()
+        return _breakdown_metric(config, con, dimension=dimension, metric_or_kpi_id=metric, table=table, limit=limit)
+
+    @_tool(_DATA)
+    def query_metric(
+        metric_id: str,
+        group_by: list[str] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        """Query a business metric with optional multi-dimensional grouping and date range filters."""
+        config, con = resolve()
+        return _query_metric(config, con, metric_id=metric_id, group_by=group_by, start_date=start_date, end_date=end_date, limit=limit)
+
+    # -------------------------------------------------------------------------
+    # Tier 3: Record & Entity Exploration Tools
+    # -------------------------------------------------------------------------
+
+    @_tool(_DATA)
+    def search_records(
+        table: str, filters: dict[str, Any] | None = None, limit: int = 20
+    ) -> dict[str, Any]:
+        """Look up records in an allowed table matching exact filter criteria.
+        Denied columns are never returned; result size is capped."""
+        config, con = resolve()
+        return _search_records(config, con, table, filters, limit)
+
+    @_tool(_DATA)
+    def get_record(
+        table: str, id_value: str, id_column: str | None = None
+    ) -> dict[str, Any]:
+        """Retrieve a single entity record by its unique identifier."""
+        config, con = resolve()
+        return _get_record(config, con, table_or_entity=table, id_value=id_value, id_column=id_column)
+
+    @_tool(_DATA)
+    def get_related_records(
+        source_table: str,
+        source_id: str,
+        target_table: str,
+        foreign_key: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """Traverse relational foreign keys between tables to find related entity records."""
+        config, con = resolve()
+        return _get_related_records(config, con, source_table=source_table, source_id=source_id, target_table=target_table, foreign_key=foreign_key, limit=limit)
+
+    # -------------------------------------------------------------------------
+    # Tier 4: Large-schema retrieval (agent_schema plugins only)
+    # -------------------------------------------------------------------------
+    _NO_CATALOG = {
+        "error": "This plugin ships the full schema_model.json, not a sharded catalog. "
+        "Use describe_data / describe_schema / read resource schema://model instead."
+    }
+
+    @_tool(_META)
+    def search_schema(query: str, limit: int = 8) -> dict[str, Any]:
+        """Find the tables most relevant to a question, ranked by BM25 over their
+        documented meaning + synonyms. On a large database ALWAYS call this
+        before writing SQL, then get_table_schema() on the hits. Returns table
+        names, roles, one-line purposes and match scores - not full column docs."""
+        cat = _catalog()
+        if cat is None:
+            return _NO_CATALOG
+        hits = cat.search(query, limit=max(1, min(limit, 25)))
+        return {"query": query, "matches": hits, "next": "get_table_schema([names])"}
+
+    @_tool(_META)
+    def get_table_schema(tables: list[str]) -> dict[str, Any]:
+        """Full documentation - purpose, grain, every column's meaning + enum
+        decode + synonyms - for the named tables. Loads only the shards needed,
+        so this is cheap even on a 500-table database. Cap: 25 tables per call."""
+        cat = _catalog()
+        if cat is None:
+            return _NO_CATALOG
+        names = list(tables)[:25]
+        found = {n: cat.get_table(n) for n in names}
+        return {
+            "tables": {n: d for n, d in found.items() if d is not None},
+            "not_found": [n for n, d in found.items() if d is None],
+        }
+
+    @_tool(_META)
+    def find_join_path(from_table: str, to_table: str, max_hops: int = 4) -> dict[str, Any]:
+        """The verified foreign-key path between two tables as an ordered edge
+        list. Use this instead of guessing join keys on a wide schema."""
+        cat = _catalog()
+        if cat is None:
+            return _NO_CATALOG
+        path = cat.join_path(from_table, to_table, max_hops=max(1, min(max_hops, 8)))
+        if not path:
+            return {"from": from_table, "to": to_table, "path": [], "reachable": False}
+        on = " AND ".join(
+            f'{e["from"]}.{e["from_column"]} = {e["to"]}.{e["to_column"]}' for e in path
+        )
+        return {"from": from_table, "to": to_table, "path": path, "on_clause": on, "reachable": True}
+
+    @_tool(_META)
+    def list_domains() -> dict[str, Any]:
+        """The FK-graph domains (subject areas) this database was clustered into,
+        each with its member tables. Use to orient before searching."""
+        cat = _catalog()
+        if cat is None:
+            return _NO_CATALOG
+        return {"table_count": cat.table_count(), "domains": cat.domains()}
+
+    # -------------------------------------------------------------------------
+    # Tier 5: Escape Hatch
+    # -------------------------------------------------------------------------
+
+    @_tool(_DATA)
+    def run_safe_query(sql: str) -> dict[str, Any]:
+        """Run a read-only SQL SELECT against allowed table(s) ONLY when no existing
+        semantic or KPI tool can answer the question. Must be a single SELECT statement
+        with explicit columns (no SELECT *); denied columns are rejected."""
+        config, con = resolve()
+        return _run_safe_query(config, con, sql)
+
+    return mcp
+
+
+mcp = create_server()
+
+
+def main() -> None:
+    try:
+        load_runtime_config()
+    except ConfigError as exc:
+        raise SystemExit(f"mis-mcp-runtime failed to start: {exc}") from exc
+    mcp.run()
+
+
+if __name__ == "__main__":
+    main()

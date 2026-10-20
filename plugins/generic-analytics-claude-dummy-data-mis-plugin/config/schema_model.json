@@ -1,0 +1,1064 @@
+{
+  "schema_hash": "sha256:d3b81bfe3b908c5e4ae478947810e94124eb5e5049b66b711ca602bd5043dc6b",
+  "generated_by": "gemini-2.5-flash",
+  "overview": "This database primarily logs the execution states and events of AI agent runs. The core entities are 'checkpoints', which represent specific states of an agent run, and 'checkpoint_writes' and 'checkpoint_blobs', which detail the data written to various channels during these runs. While no explicit relationships were detected, tables share common identifiers like 'thread_id' and 'checkpoint_id', suggesting implicit connections for tracking an agent's progression. 'checkpoint_migrations' tracks schema versions for the checkpointing system itself.",
+  "caveats": [
+    "The `type` column in `srcdb.\"public\".\"checkpoints\"` is always null and provides no information.",
+    "The `checkpoint_ns` column in `srcdb.\"public\".\"checkpoint_blobs\"`, `srcdb.\"public\".\"checkpoint_writes\"`, and `srcdb.\"public\".\"checkpoints\"` is always an empty string and can be ignored.",
+    "The `type` column in `srcdb.\"public\".\"checkpoint_blobs\"` is always 'msgpack'.",
+    "The `type` column in `srcdb.\"public\".\"checkpoint_writes\"` is predominantly 'msgpack' (73.4%), but can also be 'null'.",
+    "The `idx` column in `srcdb.\"public\".\"checkpoint_writes\"` acts as a binary flag, with values '0' and '1'."
+  ],
+  "tables": [
+    {
+      "name": "checkpoint_blobs",
+      "purpose": "One row represents a specific checkpoint blob, storing the state of an AI agent run at a particular version and channel.",
+      "role": "log",
+      "grain_prose": "one row per instance of a checkpoint blob for a specific AI agent run, version, and channel (no unique key found across all columns)",
+      "columns": [
+        {
+          "name": "thread_id",
+          "meaning": "A unique identifier for a specific AI agent run or thread.",
+          "enum": null,
+          "example": "edtech:revenue_amount:565d491df2b6fdd6:d57c98f5",
+          "confidence": "high",
+          "synonyms": [
+            "agent run ID",
+            "run identifier",
+            "session ID"
+          ]
+        },
+        {
+          "name": "checkpoint_ns",
+          "meaning": "The namespace associated with this checkpoint, which is currently always empty.",
+          "enum": {
+            "": "default or unspecified namespace"
+          },
+          "example": "",
+          "confidence": "low",
+          "synonyms": [
+            "checkpoint namespace"
+          ]
+        },
+        {
+          "name": "channel",
+          "meaning": "The specific communication channel or component within the AI agent run that this checkpoint relates to.",
+          "enum": {
+            "__pregel_tasks": "Internal channel for Pregel-like tasks",
+            "__start__": "Initial state or start of the agent run",
+            "messages": "Channel for agent messages or interactions"
+          },
+          "example": "messages",
+          "confidence": "medium",
+          "synonyms": [
+            "communication channel",
+            "component"
+          ]
+        },
+        {
+          "name": "version",
+          "meaning": "A version or sequence number indicating the progression of the checkpoint within the AI agent run.",
+          "enum": null,
+          "example": null,
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint version",
+            "state version",
+            "sequence number"
+          ]
+        },
+        {
+          "name": "type",
+          "meaning": "The data format or encoding used for the stored blob content.",
+          "enum": {
+            "msgpack": "MessagePack serialization format"
+          },
+          "example": "msgpack",
+          "confidence": "medium",
+          "synonyms": [
+            "data format",
+            "encoding type"
+          ]
+        },
+        {
+          "name": "blob",
+          "meaning": "Free-form text.",
+          "enum": null,
+          "example": null,
+          "confidence": "low",
+          "synonyms": []
+        }
+      ],
+      "synonyms": [
+        "AI agent run checkpoints",
+        "agent state logs",
+        "workflow checkpoints"
+      ]
+    },
+    {
+      "name": "checkpoint_migrations",
+      "purpose": "This table tracks the version history of database schema migrations specifically for the system managing AI agent run checkpoints.",
+      "role": "log",
+      "grain_prose": "one row per distinct database migration version for the checkpointing system",
+      "columns": [
+        {
+          "name": "v",
+          "meaning": "The sequential version number or step in the database migration process for the checkpointing system.",
+          "enum": null,
+          "example": "5",
+          "confidence": "high",
+          "synonyms": [
+            "version",
+            "migration version",
+            "schema version",
+            "step number"
+          ]
+        }
+      ],
+      "synonyms": [
+        "checkpoint version history",
+        "database migration versions for checkpoints",
+        "AI agent checkpoint schema versions"
+      ]
+    },
+    {
+      "name": "checkpoint_writes",
+      "purpose": "Records specific states or events (checkpoints) during the execution of AI agent runs, detailing the data written to various channels.",
+      "role": "log",
+      "grain_prose": "one row per unique (checkpoint_id, channel)",
+      "columns": [
+        {
+          "name": "thread_id",
+          "meaning": "Unique identifier for a specific AI agent run or conversation thread.",
+          "enum": null,
+          "example": "edtech:revenue_amount:565d491df2b6fdd6:d57c98f5",
+          "confidence": "high",
+          "synonyms": [
+            "agent run ID",
+            "conversation ID",
+            "session ID"
+          ]
+        },
+        {
+          "name": "checkpoint_ns",
+          "meaning": "Namespace for the checkpoint, currently unused or defaulting to an empty value.",
+          "enum": {
+            "": "default namespace"
+          },
+          "example": "",
+          "confidence": "medium",
+          "synonyms": [
+            "checkpoint namespace"
+          ]
+        },
+        {
+          "name": "checkpoint_id",
+          "meaning": "Unique identifier for a specific checkpoint within an AI agent run.",
+          "enum": null,
+          "example": "1f1a09a7-29eb-6d57-bfff-e31a9a7c955e",
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint ID"
+          ]
+        },
+        {
+          "name": "task_id",
+          "meaning": "Identifier for a specific task associated with the checkpoint.",
+          "enum": null,
+          "example": "3285b19c-44c9-2c69-0b94-788f5767e524",
+          "confidence": "high",
+          "synonyms": [
+            "task ID"
+          ]
+        },
+        {
+          "name": "idx",
+          "meaning": "A yes/no flag.",
+          "enum": null,
+          "example": null,
+          "confidence": "low",
+          "synonyms": []
+        },
+        {
+          "name": "channel",
+          "meaning": "The communication channel through which the checkpoint data was written.",
+          "enum": {
+            "__pregel_tasks": "Pregel tasks channel",
+            "branch:to:model": "Branch to model channel",
+            "messages": "Messages channel"
+          },
+          "example": "messages",
+          "confidence": "high",
+          "synonyms": [
+            "communication channel"
+          ]
+        },
+        {
+          "name": "type",
+          "meaning": "The format or nature of the data stored in the blob.",
+          "enum": {
+            "msgpack": "MessagePack format",
+            "null": "Null or empty data type"
+          },
+          "example": "msgpack",
+          "confidence": "high",
+          "synonyms": [
+            "data type",
+            "blob type"
+          ]
+        },
+        {
+          "name": "blob",
+          "meaning": "Free-form text.",
+          "enum": null,
+          "example": null,
+          "confidence": "low",
+          "synonyms": []
+        },
+        {
+          "name": "task_path",
+          "meaning": "The execution path or stage of the task within the AI agent run.",
+          "enum": {
+            "~__pregel_pull, __start__": "Pregel pull start path",
+            "~__pregel_pull, model": "Pregel pull model path",
+            "~__pregel_push, 0000000000, 0000000000": "Pregel push path"
+          },
+          "example": "~__pregel_pull, __start__",
+          "confidence": "high",
+          "synonyms": [
+            "execution path",
+            "workflow path"
+          ]
+        }
+      ],
+      "synonyms": [
+        "AI agent checkpoints",
+        "agent run logs",
+        "workflow checkpoints"
+      ]
+    },
+    {
+      "name": "checkpoints",
+      "purpose": "One row represents a specific state or 'checkpoint' reached during an AI agent's execution or conversation thread.",
+      "role": "log",
+      "grain_prose": "one row per unique (checkpoint_id, thread_id)",
+      "columns": [
+        {
+          "name": "thread_id",
+          "meaning": "A unique identifier for a specific AI agent run or conversation thread.",
+          "enum": null,
+          "example": "edtech:revenue_amount:565d491df2b6fdd6:d57c98f5",
+          "confidence": "high",
+          "synonyms": [
+            "agent run ID",
+            "conversation ID",
+            "session ID"
+          ]
+        },
+        {
+          "name": "checkpoint_ns",
+          "meaning": "The namespace associated with the checkpoint.",
+          "enum": {
+            "": "default namespace"
+          },
+          "example": "",
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint namespace"
+          ]
+        },
+        {
+          "name": "checkpoint_id",
+          "meaning": "A unique identifier for this specific checkpoint within its thread.",
+          "enum": null,
+          "example": "1ef4f797-8335-6428-8001-8a1503f9b875",
+          "confidence": "high",
+          "synonyms": [
+            "state ID",
+            "event ID"
+          ]
+        },
+        {
+          "name": "parent_checkpoint_id",
+          "meaning": "The identifier of the checkpoint that immediately preceded this one in the same thread, establishing a sequence.",
+          "enum": null,
+          "example": "1f1a09a7-29eb-6d57-bfff-e31a9a7c955e",
+          "confidence": "high",
+          "synonyms": [
+            "previous checkpoint ID",
+            "predecessor checkpoint ID"
+          ]
+        },
+        {
+          "name": "type",
+          "meaning": "The type or category of the checkpoint, which is always null in the current data.",
+          "enum": null,
+          "example": null,
+          "confidence": "high",
+          "synonyms": []
+        },
+        {
+          "name": "checkpoint",
+          "meaning": "A detailed JSON string representing the full state of the AI agent at this specific checkpoint.",
+          "enum": null,
+          "example": null,
+          "confidence": "high",
+          "synonyms": [
+            "agent state",
+            "state snapshot",
+            "run state"
+          ]
+        },
+        {
+          "name": "metadata",
+          "meaning": "Additional structured metadata about the checkpoint, often including the step number and source of the action.",
+          "enum": {
+            "{}": "Empty or default metadata",
+            "{\"step\": -1, \"source\": \"input\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent initial input step",
+            "{\"step\": 0, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 0",
+            "{\"step\": 1, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 1",
+            "{\"step\": 2, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 2",
+            "{\"step\": 3, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 3",
+            "{\"step\": 4, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 4",
+            "{\"step\": 5, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 5",
+            "{\"step\": 6, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 6",
+            "{\"step\": 7, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 7",
+            "{\"step\": 8, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 8",
+            "{\"step\": 9, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 9",
+            "{\"step\": 10, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 10",
+            "{\"step\": 11, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 11"
+          },
+          "example": "{\"step\": -1, \"source\": \"input\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint details",
+            "agent step info",
+            "run metadata"
+          ]
+        }
+      ],
+      "synonyms": [
+        "AI agent run states",
+        "agent progress log",
+        "workflow checkpoints"
+      ]
+    }
+  ],
+  "relationships": [],
+  "patterns": [
+    {
+      "kind": "dependency",
+      "finding": "The `idx` column in `checkpoint_writes` is functionally dependent on the `channel` column.",
+      "evidence": "Functional dependency detected: `channel` -> `idx`.",
+      "directive": "When querying `checkpoint_writes`, filtering or grouping by `channel` will implicitly determine the possible values for `idx`.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_writes\".channel",
+        "srcdb.\"public\".\"checkpoint_writes\".idx"
+      ]
+    },
+    {
+      "kind": "dependency",
+      "finding": "The `type` column in `checkpoint_writes` is functionally dependent on the `channel` column.",
+      "evidence": "Functional dependency detected: `channel` -> `type`.",
+      "directive": "When querying `checkpoint_writes`, filtering or grouping by `channel` will implicitly determine the possible values for `type`.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_writes\".channel",
+        "srcdb.\"public\".\"checkpoint_writes\".type"
+      ]
+    },
+    {
+      "kind": "segment",
+      "finding": "The `channel` column in `checkpoint_blobs` shows high concentration in a few specific channels.",
+      "evidence": "Top groups: 'messages' (53.4%), '__pregel_tasks' (40%), '__start__' (6.6%).",
+      "directive": "Focus analysis on these dominant channels for understanding blob storage patterns.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_blobs\".channel"
+      ]
+    },
+    {
+      "kind": "segment",
+      "finding": "The `channel` column in `checkpoint_writes` shows high concentration in a few specific channels.",
+      "evidence": "Top groups: 'messages' (53.3%), 'branch:to:model' (26.6%), '__pregel_tasks' (20.1%).",
+      "directive": "These channels represent the primary communication paths for checkpoint data writes.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_writes\".channel"
+      ]
+    },
+    {
+      "kind": "segment",
+      "finding": "The `task_path` column in `checkpoint_writes` shows moderate concentration across a few common execution paths.",
+      "evidence": "Top groups: '~__pregel_pull, model' (46.7%), '~__pregel_push, 0000000000, 0000000000' (40.1%), '~__pregel_pull, __start__' (13.2%).",
+      "directive": "These paths indicate common stages or transitions within the AI agent's workflow.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_writes\".task_path"
+      ]
+    },
+    {
+      "kind": "segment",
+      "finding": "The `idx` column in `checkpoint_writes` is highly concentrated between two values.",
+      "evidence": "Top groups: '0' (53.3%), '1' (46.7%).",
+      "directive": "This column effectively acts as a binary flag, likely indicating a true/false or on/off state.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_writes\".idx"
+      ]
+    },
+    {
+      "kind": "segment",
+      "finding": "The `metadata` column in `checkpoints` shows an even distribution across various 'step' values.",
+      "evidence": "Top groups (each ~10.9%): steps 5, 3, 2, 0, 4, etc., all with 'source': 'loop' and 'ls_integration': 'langchain_create_agent'.",
+      "directive": "This suggests a relatively balanced progression through different loop steps for the 'langchain_create_agent' integration.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoints\".metadata"
+      ]
+    },
+    {
+      "kind": "quality",
+      "finding": "The `type` column in `checkpoints` is entirely null.",
+      "evidence": "`type` is empty for 100.0% of rows.",
+      "directive": "This column provides no useful information and should be excluded from queries.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoints\".type"
+      ]
+    },
+    {
+      "kind": "quality",
+      "finding": "The `checkpoint_ns` column in `checkpoint_blobs`, `checkpoint_writes`, and `checkpoints` is always an empty string.",
+      "evidence": "`checkpoint_ns` is always \"\" (100% of rows in all three tables).",
+      "directive": "This column provides no useful information and should be excluded from queries.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_blobs\".checkpoint_ns",
+        "srcdb.\"public\".\"checkpoint_writes\".checkpoint_ns",
+        "srcdb.\"public\".\"checkpoints\".checkpoint_ns"
+      ]
+    },
+    {
+      "kind": "quality",
+      "finding": "The `type` column in `checkpoint_blobs` is always 'msgpack'.",
+      "evidence": "`type` is always \"msgpack\" (100% of rows).",
+      "directive": "This column provides no variability and can be assumed to be 'msgpack' for all records.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_blobs\".type"
+      ]
+    },
+    {
+      "kind": "quality",
+      "finding": "The `type` column in `checkpoint_writes` is dominated by 'msgpack'.",
+      "evidence": "73.4% of non-null rows are 'msgpack'.",
+      "directive": "While 'msgpack' is the most common, be aware that other values (e.g., 'null') exist and should be considered if a complete picture is needed.",
+      "affects": [
+        "srcdb.\"public\".\"checkpoint_writes\".type"
+      ]
+    }
+  ],
+  "value_sets": {
+    "checkpoint_blobs.checkpoint_ns": [
+      ""
+    ],
+    "checkpoint_blobs.type": [
+      "msgpack"
+    ],
+    "checkpoint_writes.checkpoint_ns": [
+      ""
+    ],
+    "checkpoints.checkpoint_ns": [
+      ""
+    ],
+    "checkpoint_writes.idx": [
+      "0",
+      "1"
+    ],
+    "checkpoint_writes.type": [
+      "msgpack",
+      "null"
+    ],
+    "checkpoint_blobs.channel": [
+      "__pregel_tasks",
+      "__start__",
+      "messages"
+    ],
+    "checkpoint_writes.channel": [
+      "__pregel_tasks",
+      "branch:to:model",
+      "messages"
+    ],
+    "checkpoint_writes.task_path": [
+      "~__pregel_pull, __start__",
+      "~__pregel_pull, model",
+      "~__pregel_push, 0000000000, 0000000000"
+    ],
+    "checkpoint_migrations.v": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "checkpoints.metadata": [
+      "{\"step\": -1, \"source\": \"input\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 0, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 1, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 10, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 11, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 2, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 3, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 4, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 5, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 6, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 7, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 8, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{\"step\": 9, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+      "{}"
+    ]
+  },
+  "statistics": {
+    "correlations": [],
+    "temporal": [],
+    "functional_dependencies": [
+      {
+        "table": "checkpoint_writes",
+        "determinant": "channel",
+        "dependent": "idx"
+      },
+      {
+        "table": "checkpoint_writes",
+        "determinant": "channel",
+        "dependent": "type"
+      }
+    ],
+    "redundancies": [],
+    "mismatches": [],
+    "segments": [
+      {
+        "table": "checkpoint_blobs",
+        "dimension": "channel",
+        "top_groups": [
+          [
+            "messages",
+            0.534
+          ],
+          [
+            "__pregel_tasks",
+            0.4
+          ],
+          [
+            "__start__",
+            0.066
+          ]
+        ],
+        "concentration": "high"
+      },
+      {
+        "table": "checkpoint_writes",
+        "dimension": "channel",
+        "top_groups": [
+          [
+            "messages",
+            0.533
+          ],
+          [
+            "branch:to:model",
+            0.266
+          ],
+          [
+            "__pregel_tasks",
+            0.201
+          ]
+        ],
+        "concentration": "high"
+      },
+      {
+        "table": "checkpoint_writes",
+        "dimension": "task_path",
+        "top_groups": [
+          [
+            "~__pregel_pull, model",
+            0.467
+          ],
+          [
+            "~__pregel_push, 0000000000, 0000000000",
+            0.401
+          ],
+          [
+            "~__pregel_pull, __start__",
+            0.132
+          ]
+        ],
+        "concentration": "moderate"
+      },
+      {
+        "table": "checkpoint_writes",
+        "dimension": "idx",
+        "top_groups": [
+          [
+            "0",
+            0.533
+          ],
+          [
+            "1",
+            0.467
+          ]
+        ],
+        "concentration": "high"
+      },
+      {
+        "table": "checkpoints",
+        "dimension": "metadata",
+        "top_groups": [
+          [
+            "{\"step\": 5, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+            0.109
+          ],
+          [
+            "{\"step\": 3, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+            0.109
+          ],
+          [
+            "{\"step\": 2, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+            0.109
+          ],
+          [
+            "{\"step\": 0, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+            0.109
+          ],
+          [
+            "{\"step\": 4, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+            0.109
+          ]
+        ],
+        "concentration": "even"
+      }
+    ]
+  },
+  "quality_findings": [
+    {
+      "id": "dominant_value:checkpoint_writes.type",
+      "code": "dominant_value",
+      "severity": "medium",
+      "table": "checkpoint_writes",
+      "column": "type",
+      "summary": "73.4% of 379 non-null rows in \"type\" are \"msgpack\".",
+      "top_values": [
+        {
+          "value": "msgpack",
+          "count": 278,
+          "percent": 73.4
+        },
+        {
+          "value": "null",
+          "count": 101,
+          "percent": 26.6
+        }
+      ]
+    },
+    {
+      "id": "high_null:checkpoints.type",
+      "code": "high_null",
+      "severity": "medium",
+      "table": "checkpoints",
+      "column": "type",
+      "summary": "\"type\" is empty for 100.0% of rows.",
+      "top_values": []
+    },
+    {
+      "id": "single_value:checkpoint_blobs.checkpoint_ns",
+      "code": "single_value",
+      "severity": "low",
+      "table": "checkpoint_blobs",
+      "column": "checkpoint_ns",
+      "summary": "\"checkpoint_ns\" is always \"\" (380 row(s)).",
+      "top_values": [
+        {
+          "value": "",
+          "count": 380,
+          "percent": 100.0
+        }
+      ]
+    },
+    {
+      "id": "single_value:checkpoint_blobs.type",
+      "code": "single_value",
+      "severity": "low",
+      "table": "checkpoint_blobs",
+      "column": "type",
+      "summary": "\"type\" is always \"msgpack\" (380 row(s)).",
+      "top_values": [
+        {
+          "value": "msgpack",
+          "count": 380,
+          "percent": 100.0
+        }
+      ]
+    },
+    {
+      "id": "single_value:checkpoint_writes.checkpoint_ns",
+      "code": "single_value",
+      "severity": "low",
+      "table": "checkpoint_writes",
+      "column": "checkpoint_ns",
+      "summary": "\"checkpoint_ns\" is always \"\" (379 row(s)).",
+      "top_values": [
+        {
+          "value": "",
+          "count": 379,
+          "percent": 100.0
+        }
+      ]
+    },
+    {
+      "id": "single_value:checkpoints.checkpoint_ns",
+      "code": "single_value",
+      "severity": "low",
+      "table": "checkpoints",
+      "column": "checkpoint_ns",
+      "summary": "\"checkpoint_ns\" is always \"\" (229 row(s)).",
+      "top_values": [
+        {
+          "value": "",
+          "count": 229,
+          "percent": 100.0
+        }
+      ]
+    }
+  ],
+  "cookbook": [
+    {
+      "question": "How many total checkpoint blobs are stored?",
+      "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoint_blobs\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "List all unique communication channels present in checkpoint blobs.",
+      "sql": "SELECT DISTINCT channel FROM srcdb.\"public\".\"checkpoint_blobs\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Count the number of checkpoint blobs per channel, ordered by the most frequent.",
+      "sql": "SELECT channel, COUNT(*) AS blob_count FROM srcdb.\"public\".\"checkpoint_blobs\" GROUP BY channel ORDER BY blob_count DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Retrieve an example of a blob content for the 'messages' channel.",
+      "sql": "SELECT blob FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE channel = 'messages' LIMIT 1;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "The `blob` column contains free-form text, often JSON.",
+      "verified": true
+    },
+    {
+      "question": "What is the latest database migration version for the checkpointing system?",
+      "sql": "SELECT MAX(v) FROM srcdb.\"public\".\"checkpoint_migrations\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_migrations\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "List all recorded migration versions.",
+      "sql": "SELECT v FROM srcdb.\"public\".\"checkpoint_migrations\" ORDER BY v DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_migrations\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "How many total checkpoint write events are recorded?",
+      "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoint_writes\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Count the number of checkpoint writes per communication channel.",
+      "sql": "SELECT channel, COUNT(*) AS write_count FROM srcdb.\"public\".\"checkpoint_writes\" GROUP BY channel ORDER BY write_count DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "What are the distinct task paths observed in checkpoint writes?",
+      "sql": "SELECT DISTINCT task_path FROM srcdb.\"public\".\"checkpoint_writes\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Count checkpoint writes by task path, showing the most common paths.",
+      "sql": "SELECT task_path, COUNT(*) AS path_count FROM srcdb.\"public\".\"checkpoint_writes\" GROUP BY task_path ORDER BY path_count DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Show the distribution of the 'idx' flag in checkpoint writes.",
+      "sql": "SELECT idx, COUNT(*) AS idx_count FROM srcdb.\"public\".\"checkpoint_writes\" GROUP BY idx ORDER BY idx_count DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "The `idx` column acts as a binary flag (0 or 1).",
+      "verified": true
+    },
+    {
+      "question": "Retrieve an example of a blob content for a checkpoint write on the 'branch:to:model' channel.",
+      "sql": "SELECT blob FROM srcdb.\"public\".\"checkpoint_writes\" WHERE channel = 'branch:to:model' LIMIT 1;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "The `blob` column contains free-form text, often JSON.",
+      "verified": true
+    },
+    {
+      "question": "How many unique AI agent run IDs (`thread_id`) are present in checkpoint writes?",
+      "sql": "SELECT COUNT(DISTINCT thread_id) FROM srcdb.\"public\".\"checkpoint_writes\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "How many total checkpoints are recorded for AI agent runs?",
+      "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoints\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "List all unique AI agent run IDs (`thread_id`) that have checkpoints.",
+      "sql": "SELECT DISTINCT thread_id FROM srcdb.\"public\".\"checkpoints\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Count the number of checkpoints per AI agent run (`thread_id`), showing the runs with the most checkpoints.",
+      "sql": "SELECT thread_id, COUNT(*) AS checkpoint_count FROM srcdb.\"public\".\"checkpoints\" GROUP BY thread_id ORDER BY checkpoint_count DESC LIMIT 10;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Retrieve an example of the full agent state (`checkpoint` JSON) for a specific checkpoint ID.",
+      "sql": "SELECT checkpoint FROM srcdb.\"public\".\"checkpoints\" WHERE checkpoint_id = '1ef4f797-8335-6428-8001-8a1503f9b875' LIMIT 1;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "The `checkpoint` column contains a detailed JSON string of the agent's state.",
+      "verified": true
+    },
+    {
+      "question": "Count checkpoints by their `metadata` content to understand common steps or sources.",
+      "sql": "SELECT metadata, COUNT(*) AS metadata_count FROM srcdb.\"public\".\"checkpoints\" GROUP BY metadata ORDER BY metadata_count DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "The `metadata` column contains JSON strings; grouping by the full string reveals common patterns.",
+      "verified": true
+    },
+    {
+      "question": "Find checkpoints that are initial inputs (where metadata indicates 'source': 'input').",
+      "sql": "SELECT thread_id, checkpoint_id FROM srcdb.\"public\".\"checkpoints\" WHERE metadata LIKE '%\"source\": \"input\"%';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "This query uses a LIKE operator to search within the JSON string of the `metadata` column.",
+      "verified": true
+    },
+    {
+      "question": "How many unique `thread_id`s exist across all checkpoint-related tables?",
+      "sql": "SELECT COUNT(DISTINCT thread_id) FROM (SELECT thread_id FROM srcdb.\"public\".\"checkpoint_blobs\" UNION ALL SELECT thread_id FROM srcdb.\"public\".\"checkpoint_writes\" UNION ALL SELECT thread_id FROM srcdb.\"public\".\"checkpoints\");",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\"",
+        "srcdb.\"public\".\"checkpoint_writes\"",
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "This query combines `thread_id`s from multiple tables to find a global unique count. No explicit joins are performed.",
+      "verified": true
+    },
+    {
+      "question": "Retrieve the `version` and `channel` for a specific `thread_id` from `checkpoint_blobs`.",
+      "sql": "SELECT version, channel FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Find all checkpoint writes associated with a particular `task_id`.",
+      "sql": "SELECT thread_id, checkpoint_id, channel, task_path FROM srcdb.\"public\".\"checkpoint_writes\" WHERE task_id = '3285b19c-44c9-2c69-0b94-788f5767e524';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Get the `parent_checkpoint_id` and `metadata` for a given `checkpoint_id`.",
+      "sql": "SELECT parent_checkpoint_id, metadata FROM srcdb.\"public\".\"checkpoints\" WHERE checkpoint_id = '1ef4f797-8335-6428-8001-8a1503f9b875';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Count the number of distinct `checkpoint_id`s across all checkpoint-related tables.",
+      "sql": "SELECT COUNT(DISTINCT checkpoint_id) FROM (SELECT checkpoint_id FROM srcdb.\"public\".\"checkpoint_writes\" UNION ALL SELECT checkpoint_id FROM srcdb.\"public\".\"checkpoints\");",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\"",
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "This query combines `checkpoint_id`s from `checkpoint_writes` and `checkpoints` to find a global unique count. `checkpoint_blobs` does not have a `checkpoint_id` column.",
+      "verified": true
+    },
+    {
+      "question": "Retrieve all columns for checkpoint writes where the `type` is 'null'.",
+      "sql": "SELECT thread_id, checkpoint_id, channel, type, blob FROM srcdb.\"public\".\"checkpoint_writes\" WHERE type = 'null';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "The `type` column in `checkpoint_writes` can be 'null' in addition to 'msgpack'.",
+      "verified": true
+    },
+    {
+      "question": "Find all checkpoint blobs associated with the '__pregel_tasks' channel.",
+      "sql": "SELECT thread_id, version, blob FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE channel = '__pregel_tasks';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "List all `thread_id`s that have checkpoint writes on the 'messages' channel.",
+      "sql": "SELECT DISTINCT thread_id FROM srcdb.\"public\".\"checkpoint_writes\" WHERE channel = 'messages';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Identify checkpoints that do not have a `parent_checkpoint_id` (likely initial checkpoints in a thread).",
+      "sql": "SELECT thread_id, checkpoint_id FROM srcdb.\"public\".\"checkpoints\" WHERE parent_checkpoint_id IS NULL;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Count how many times each `parent_checkpoint_id` is referenced, indicating branching or sequential progression.",
+      "sql": "SELECT parent_checkpoint_id, COUNT(*) AS child_count FROM srcdb.\"public\".\"checkpoints\" WHERE parent_checkpoint_id IS NOT NULL GROUP BY parent_checkpoint_id ORDER BY child_count DESC;",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "Retrieve the `checkpoint` and `metadata` for checkpoints where the `metadata` indicates 'step': 0.",
+      "sql": "SELECT checkpoint, metadata FROM srcdb.\"public\".\"checkpoints\" WHERE metadata LIKE '%\"step\": 0%';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "This query uses a LIKE operator to search within the JSON string of the `metadata` column.",
+      "verified": true
+    },
+    {
+      "question": "Find the `thread_id` and `checkpoint_id` for checkpoint writes that occurred on the `~__pregel_pull, model` task path.",
+      "sql": "SELECT thread_id, checkpoint_id FROM srcdb.\"public\".\"checkpoint_writes\" WHERE task_path = '~__pregel_pull, model';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "",
+      "verified": true
+    },
+    {
+      "question": "List all columns for a specific `thread_id` from `checkpoint_blobs`.",
+      "sql": "SELECT thread_id, checkpoint_ns, channel, version, type, blob FROM srcdb.\"public\".\"checkpoint_blobs\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_blobs\""
+      ],
+      "notes": "The `checkpoint_ns` column is always empty.",
+      "verified": true
+    },
+    {
+      "question": "List all columns for a specific `thread_id` from `checkpoint_writes`.",
+      "sql": "SELECT thread_id, checkpoint_ns, checkpoint_id, task_id, idx, channel, type, blob, task_path FROM srcdb.\"public\".\"checkpoint_writes\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "The `checkpoint_ns` column is always empty.",
+      "verified": true
+    },
+    {
+      "question": "List all columns for a specific `thread_id` from `checkpoints`.",
+      "sql": "SELECT thread_id, checkpoint_ns, checkpoint_id, parent_checkpoint_id, type, checkpoint, metadata FROM srcdb.\"public\".\"checkpoints\" WHERE thread_id = 'edtech:revenue_amount:565d491df2b6fdd6:d57c98f5';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoints\""
+      ],
+      "notes": "The `checkpoint_ns` and `type` columns are always empty/null.",
+      "verified": true
+    },
+    {
+      "question": "Count the number of checkpoint writes where `idx` is '1'.",
+      "sql": "SELECT COUNT(*) FROM srcdb.\"public\".\"checkpoint_writes\" WHERE idx = '1';",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_writes\""
+      ],
+      "notes": "The `idx` column acts as a binary flag.",
+      "verified": true
+    },
+    {
+      "question": "Find the earliest recorded migration version.",
+      "sql": "SELECT MIN(v) FROM srcdb.\"public\".\"checkpoint_migrations\";",
+      "tables": [
+        "srcdb.\"public\".\"checkpoint_migrations\""
+      ],
+      "notes": "",
+      "verified": true
+    }
+  ],
+  "coverage": {
+    "cookbook_total": 36,
+    "cookbook_verified": 36,
+    "columns_total": 23,
+    "columns_documented": 19
+  },
+  "synthesis_failures": []
+}

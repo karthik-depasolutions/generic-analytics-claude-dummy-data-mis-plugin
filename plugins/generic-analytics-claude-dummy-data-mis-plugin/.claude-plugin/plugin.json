@@ -1,0 +1,15 @@
+{
+  "name": "generic-analytics-claude-dummy-data-mis-plugin",
+  "displayName": "Claude_dummy_data \u2014 Generic Analytics Pack Analyst",
+  "version": "0.1.0",
+  "description": "Industry-agnostic fallback pack for tabular data that doesn't clearly match a specialized industry pack. Deliberately low-confidence by design \u2014 see forge_core.classification.matcher \u2014 so it never outranks a genuine industry match, but always provides a usable baseline.",
+  "author": {
+    "name": "MIS Plugin Forge"
+  },
+  "keywords": [
+    "generic-analytics",
+    "mis-plugin-forge"
+  ],
+  "defaultEnabled": true,
+  "mcpServers": "./.mcp.json"
+}

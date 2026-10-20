@@ -1,0 +1,339 @@
+{
+  "catalog_version": 1,
+  "shard_id": 0,
+  "tables": [
+    {
+      "name": "checkpoint_blobs",
+      "purpose": "One row represents a specific checkpoint blob, storing the state of an AI agent run at a particular version and channel.",
+      "role": "log",
+      "grain_prose": "one row per instance of a checkpoint blob for a specific AI agent run, version, and channel (no unique key found across all columns)",
+      "columns": [
+        {
+          "name": "thread_id",
+          "meaning": "A unique identifier for a specific AI agent run or thread.",
+          "enum": null,
+          "example": "edtech:revenue_amount:565d491df2b6fdd6:d57c98f5",
+          "confidence": "high",
+          "synonyms": [
+            "agent run ID",
+            "run identifier",
+            "session ID"
+          ]
+        },
+        {
+          "name": "checkpoint_ns",
+          "meaning": "The namespace associated with this checkpoint, which is currently always empty.",
+          "enum": {
+            "": "default or unspecified namespace"
+          },
+          "example": "",
+          "confidence": "low",
+          "synonyms": [
+            "checkpoint namespace"
+          ]
+        },
+        {
+          "name": "channel",
+          "meaning": "The specific communication channel or component within the AI agent run that this checkpoint relates to.",
+          "enum": {
+            "__pregel_tasks": "Internal channel for Pregel-like tasks",
+            "__start__": "Initial state or start of the agent run",
+            "messages": "Channel for agent messages or interactions"
+          },
+          "example": "messages",
+          "confidence": "medium",
+          "synonyms": [
+            "communication channel",
+            "component"
+          ]
+        },
+        {
+          "name": "version",
+          "meaning": "A version or sequence number indicating the progression of the checkpoint within the AI agent run.",
+          "enum": null,
+          "example": null,
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint version",
+            "state version",
+            "sequence number"
+          ]
+        },
+        {
+          "name": "type",
+          "meaning": "The data format or encoding used for the stored blob content.",
+          "enum": {
+            "msgpack": "MessagePack serialization format"
+          },
+          "example": "msgpack",
+          "confidence": "medium",
+          "synonyms": [
+            "data format",
+            "encoding type"
+          ]
+        },
+        {
+          "name": "blob",
+          "meaning": "Free-form text.",
+          "enum": null,
+          "example": null,
+          "confidence": "low",
+          "synonyms": []
+        }
+      ],
+      "synonyms": [
+        "AI agent run checkpoints",
+        "agent state logs",
+        "workflow checkpoints"
+      ]
+    },
+    {
+      "name": "checkpoint_migrations",
+      "purpose": "This table tracks the version history of database schema migrations specifically for the system managing AI agent run checkpoints.",
+      "role": "log",
+      "grain_prose": "one row per distinct database migration version for the checkpointing system",
+      "columns": [
+        {
+          "name": "v",
+          "meaning": "The sequential version number or step in the database migration process for the checkpointing system.",
+          "enum": null,
+          "example": "5",
+          "confidence": "high",
+          "synonyms": [
+            "version",
+            "migration version",
+            "schema version",
+            "step number"
+          ]
+        }
+      ],
+      "synonyms": [
+        "checkpoint version history",
+        "database migration versions for checkpoints",
+        "AI agent checkpoint schema versions"
+      ]
+    },
+    {
+      "name": "checkpoint_writes",
+      "purpose": "Records specific states or events (checkpoints) during the execution of AI agent runs, detailing the data written to various channels.",
+      "role": "log",
+      "grain_prose": "one row per unique (checkpoint_id, channel)",
+      "columns": [
+        {
+          "name": "thread_id",
+          "meaning": "Unique identifier for a specific AI agent run or conversation thread.",
+          "enum": null,
+          "example": "edtech:revenue_amount:565d491df2b6fdd6:d57c98f5",
+          "confidence": "high",
+          "synonyms": [
+            "agent run ID",
+            "conversation ID",
+            "session ID"
+          ]
+        },
+        {
+          "name": "checkpoint_ns",
+          "meaning": "Namespace for the checkpoint, currently unused or defaulting to an empty value.",
+          "enum": {
+            "": "default namespace"
+          },
+          "example": "",
+          "confidence": "medium",
+          "synonyms": [
+            "checkpoint namespace"
+          ]
+        },
+        {
+          "name": "checkpoint_id",
+          "meaning": "Unique identifier for a specific checkpoint within an AI agent run.",
+          "enum": null,
+          "example": "1f1a09a7-29eb-6d57-bfff-e31a9a7c955e",
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint ID"
+          ]
+        },
+        {
+          "name": "task_id",
+          "meaning": "Identifier for a specific task associated with the checkpoint.",
+          "enum": null,
+          "example": "3285b19c-44c9-2c69-0b94-788f5767e524",
+          "confidence": "high",
+          "synonyms": [
+            "task ID"
+          ]
+        },
+        {
+          "name": "idx",
+          "meaning": "A yes/no flag.",
+          "enum": null,
+          "example": null,
+          "confidence": "low",
+          "synonyms": []
+        },
+        {
+          "name": "channel",
+          "meaning": "The communication channel through which the checkpoint data was written.",
+          "enum": {
+            "__pregel_tasks": "Pregel tasks channel",
+            "branch:to:model": "Branch to model channel",
+            "messages": "Messages channel"
+          },
+          "example": "messages",
+          "confidence": "high",
+          "synonyms": [
+            "communication channel"
+          ]
+        },
+        {
+          "name": "type",
+          "meaning": "The format or nature of the data stored in the blob.",
+          "enum": {
+            "msgpack": "MessagePack format",
+            "null": "Null or empty data type"
+          },
+          "example": "msgpack",
+          "confidence": "high",
+          "synonyms": [
+            "data type",
+            "blob type"
+          ]
+        },
+        {
+          "name": "blob",
+          "meaning": "Free-form text.",
+          "enum": null,
+          "example": null,
+          "confidence": "low",
+          "synonyms": []
+        },
+        {
+          "name": "task_path",
+          "meaning": "The execution path or stage of the task within the AI agent run.",
+          "enum": {
+            "~__pregel_pull, __start__": "Pregel pull start path",
+            "~__pregel_pull, model": "Pregel pull model path",
+            "~__pregel_push, 0000000000, 0000000000": "Pregel push path"
+          },
+          "example": "~__pregel_pull, __start__",
+          "confidence": "high",
+          "synonyms": [
+            "execution path",
+            "workflow path"
+          ]
+        }
+      ],
+      "synonyms": [
+        "AI agent checkpoints",
+        "agent run logs",
+        "workflow checkpoints"
+      ]
+    },
+    {
+      "name": "checkpoints",
+      "purpose": "One row represents a specific state or 'checkpoint' reached during an AI agent's execution or conversation thread.",
+      "role": "log",
+      "grain_prose": "one row per unique (checkpoint_id, thread_id)",
+      "columns": [
+        {
+          "name": "thread_id",
+          "meaning": "A unique identifier for a specific AI agent run or conversation thread.",
+          "enum": null,
+          "example": "edtech:revenue_amount:565d491df2b6fdd6:d57c98f5",
+          "confidence": "high",
+          "synonyms": [
+            "agent run ID",
+            "conversation ID",
+            "session ID"
+          ]
+        },
+        {
+          "name": "checkpoint_ns",
+          "meaning": "The namespace associated with the checkpoint.",
+          "enum": {
+            "": "default namespace"
+          },
+          "example": "",
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint namespace"
+          ]
+        },
+        {
+          "name": "checkpoint_id",
+          "meaning": "A unique identifier for this specific checkpoint within its thread.",
+          "enum": null,
+          "example": "1ef4f797-8335-6428-8001-8a1503f9b875",
+          "confidence": "high",
+          "synonyms": [
+            "state ID",
+            "event ID"
+          ]
+        },
+        {
+          "name": "parent_checkpoint_id",
+          "meaning": "The identifier of the checkpoint that immediately preceded this one in the same thread, establishing a sequence.",
+          "enum": null,
+          "example": "1f1a09a7-29eb-6d57-bfff-e31a9a7c955e",
+          "confidence": "high",
+          "synonyms": [
+            "previous checkpoint ID",
+            "predecessor checkpoint ID"
+          ]
+        },
+        {
+          "name": "type",
+          "meaning": "The type or category of the checkpoint, which is always null in the current data.",
+          "enum": null,
+          "example": null,
+          "confidence": "high",
+          "synonyms": []
+        },
+        {
+          "name": "checkpoint",
+          "meaning": "A detailed JSON string representing the full state of the AI agent at this specific checkpoint.",
+          "enum": null,
+          "example": null,
+          "confidence": "high",
+          "synonyms": [
+            "agent state",
+            "state snapshot",
+            "run state"
+          ]
+        },
+        {
+          "name": "metadata",
+          "meaning": "Additional structured metadata about the checkpoint, often including the step number and source of the action.",
+          "enum": {
+            "{}": "Empty or default metadata",
+            "{\"step\": -1, \"source\": \"input\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent initial input step",
+            "{\"step\": 0, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 0",
+            "{\"step\": 1, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 1",
+            "{\"step\": 2, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 2",
+            "{\"step\": 3, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 3",
+            "{\"step\": 4, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 4",
+            "{\"step\": 5, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 5",
+            "{\"step\": 6, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 6",
+            "{\"step\": 7, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 7",
+            "{\"step\": 8, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 8",
+            "{\"step\": 9, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 9",
+            "{\"step\": 10, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 10",
+            "{\"step\": 11, \"source\": \"loop\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}": "Langchain agent loop step 11"
+          },
+          "example": "{\"step\": -1, \"source\": \"input\", \"parents\": {}, \"ls_integration\": \"langchain_create_agent\"}",
+          "confidence": "high",
+          "synonyms": [
+            "checkpoint details",
+            "agent step info",
+            "run metadata"
+          ]
+        }
+      ],
+      "synonyms": [
+        "AI agent run states",
+        "agent progress log",
+        "workflow checkpoints"
+      ]
+    }
+  ]
+}

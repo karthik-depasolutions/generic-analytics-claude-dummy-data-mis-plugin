@@ -1,0 +1,48 @@
+{
+  "pack_slug": "generic-analytics",
+  "data_source_id": "37671a201541e862",
+  "tables": [
+    {
+      "alias": "fact",
+      "physical": "srcdb.\"public\".\"checkpoints\"",
+      "grain": "checkpoints",
+      "join_on": null,
+      "join_is_to_parent": true
+    }
+  ],
+  "columns": [
+    {
+      "role": "category_dim",
+      "table_alias": "fact",
+      "physical": "checkpoint_ns",
+      "confidence": 0.45,
+      "evidence": "core-token overlap 0.00 for role 'category_dim'; column role categorical matches expected type",
+      "source": "deterministic"
+    },
+    {
+      "role": "record_ref",
+      "table_alias": "fact",
+      "physical": "thread_id",
+      "confidence": 0.45,
+      "evidence": "core-token overlap 0.00 for role 'record_ref'; column role identifier matches expected type",
+      "source": "deterministic"
+    }
+  ],
+  "value_sets": [],
+  "allowed_tables": [
+    "srcdb.\"public\".\"checkpoint_blobs\"",
+    "srcdb.\"public\".\"checkpoint_migrations\"",
+    "srcdb.\"public\".\"checkpoint_writes\"",
+    "srcdb.\"public\".\"checkpoints\""
+  ],
+  "relationships": [],
+  "denied_columns": [
+    "blob",
+    "checkpoint",
+    "version"
+  ],
+  "unresolved_roles": [
+    "measure_amount",
+    "date_dim"
+  ]
+}
